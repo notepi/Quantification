@@ -6,32 +6,35 @@ Created on Thu Jun  6 22:43:59 2019
 @author: pan
 """
 
-import numpy as np
-import pandas as pd
-import os 
-import matplotlib.pyplot as plt
+import os
 import time
-from sklearn.model_selection import GridSearchCV
-from sklearn.model_selection import train_test_split
-from sklearn.linear_model import Lasso, Ridge
-from sklearn.metrics import mean_squared_error #均方误差
-from sklearn.metrics import mean_absolute_error #平方绝对误差
-from sklearn.metrics import r2_score#R square
-import tushare as ts
-from sklearn.model_selection import RandomizedSearchCV
-import matplotlib.ticker as ticker
+
 # from sklearn.externals import joblib
 import joblib
+import matplotlib.pyplot as plt
+import matplotlib.ticker as ticker
+import numpy as np
+import pandas as pd
+import tushare as ts
+from sklearn.linear_model import Lasso, Ridge
+from sklearn.metrics import mean_absolute_error  # 平方绝对误差
+from sklearn.metrics import mean_squared_error  # 均方误差
+from sklearn.metrics import r2_score  # R square
+from sklearn.model_selection import (GridSearchCV, RandomizedSearchCV,
+                                     train_test_split)
+
+
 # import pickle
 def f(train,test,na):
+    global tagname
     #训练数据
     y=train[tagname]
-    X=train.iloc[:,1:]
+    X=train
     del X[tagname]
     
     #测试数据
     TagTest=test[tagname]
-    XdataTest=test.iloc[:,1:]
+    XdataTest=test
     del XdataTest[tagname]
     
     # 预测
@@ -40,7 +43,7 @@ def f(train,test,na):
     alpha_can = np.logspace(-3, 2, 10)
     lasso_model = GridSearchCV(model, param_grid={'alpha': alpha_can}, cv=5)
     lasso_model.fit(X, y) 
-    print(X.columns)
+    # print(X.columns)
     
     # 保存模型
     joblib.dump(lasso_model, "./model/"+na+"_Model.pkl")
@@ -54,14 +57,7 @@ def f(train,test,na):
     pca_mse=mean_squared_error(y_hat,tag)
     pca_mbe=mean_absolute_error(y_hat,tag)
     pca_r2=r2_score(y_hat,tag)
-    
-#    t = np.arange(len(tag))
-#    plt.figure()
-#    plt.plot(XdataTest.index, tag,'-',label='a')
-#    plt.plot(XdataTest.index, y_hat,'-',label='b')
-#    plt.title('function')
-#    plt.legend()
-#    plt.show()   
+
     
     #保存测试数据
     result=pd.DataFrame([tag.values,y_hat]).T
@@ -159,35 +155,39 @@ if __name__ == "__main__":
     ts.set_token('4e980c06a141622965e416b016f45027fb5f0fa47f0d6d8863d4bd31')
     
     pro = ts.pro_api()
+
+    #读取股票参数
     '''
     数据频度 ：支持分钟(min)/日(D)/周(W)/月(M)K线，
     其中1min表示1分钟（类推1/5/15/30/60分钟） ，
     默认D。目前有120积分的用户自动具备试用权限（每分钟5次），正式权限请在QQ群私信群主。
     '''   
-    stock_code=['000876.sz','300498.sz','002458.sz','002746.sz','002299.sz',\
-                '002234.sz','002321.sz','002157.sz','002124.sz',\
-                '002714.sz','000001.SH']
-    stock_name=["新希望","温氏股份","益生股份",'仙坛股份','圣农发展','民和股份',\
-                '华英农业','正邦科技','天邦股份','牧原股份','上证指数']
+    # stock_code=['000876.sz','300498.sz','002458.sz','002746.sz','002299.sz',\
+    #             '002234.sz','002321.sz','002157.sz','002124.sz',\
+    #             '002714.sz','000001.SH']
+    # stock_name=["新希望","温氏股份","益生股份",'仙坛股份','圣农发展','民和股份',\
+    #             '华英农业','正邦科技','天邦股份','牧原股份','上证指数']
+    print("========================================================")
+    print("init")
+    stockdata=pd.read_excel("./doc/stock.xlsx",dtype='str')
+    stock_code=list(stockdata['stock_code'].apply(lambda x:x+'.')+stockdata['local'])
+    stock_name=list(stockdata['stock_name'])
+    tagname=stock_name[-1]
 
-    tagname="华英农业"
+    startime_read=list(stockdata['startime'])[0]
+    #截止日期要比真实的大1
+    temp=time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+    temp=str(int("".join(temp.split(" ")[0].split('-')))+1)
+    endtime_read=temp
+    print("start time is:",startime_read)
+    print("end time is:",endtime_read)
 
-    
+
     result=[]
     for name_index,stock in enumerate(stock_code):
-        # 最早从12月5日开始
-        startime="20181205"
-        #截止日期要比真实的大1
-        temp=time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
-        temp=str(int("".join(temp.split(" ")[0].split('-')))+1)
-        endtime=temp
-#        startime="20190610"
-#        #截止日期要比真实的大1
-#        endtime="20190611"
+        startime=startime_read
+        endtime=endtime_read
         print(stock_name[name_index])
-        # 防止无限次
-        i=0
-        
         #读取文件
         #有文件
         flags=1
@@ -207,9 +207,12 @@ if __name__ == "__main__":
             # 一分钟最多5次，也可避免最开始全是空有异常
             print("sleep")
             time.sleep(16)
-            i=i+1
+            print("start time is:",startime)
+            print("end time is:",endtime)
+
             df = ts.pro_bar(ts_code=stock, start_date=startime, end_date=endtime,freq="1min")
             if len(df)<=0:
+                print("更新完成")
                 break
                 pass
             # 读取到新文件
@@ -223,12 +226,6 @@ if __name__ == "__main__":
             startime=str(nexttime)
             print(len(df))
             print(nexttime)
-            #最多500次，防止无限循环
-            if i>500:
-                print(nexttime)
-                break
-                pass
-
             pass#while结束
 
         data=data.sort_values(by='time',ascending=False)
@@ -288,10 +285,10 @@ if __name__ == "__main__":
     re,model=f(train,test,na='stable_')
     
     #检验结果
-    yhat=model.predict(finaldata.iloc[-241:,1:-1])
+    yhat=model.predict(finaldata.iloc[-241:,:-1])
     y=finaldata.iloc[-241:,-1].values
     ret=yhat-y
-    y_or=model_or.predict(finaldata.iloc[-241:,1:-1])
+    y_or=model_or.predict(finaldata.iloc[-241:,:-1])
     
     tick_spacing = int(len(result)/60)+1
     _, ax = plt.subplots(1,1)
@@ -310,33 +307,8 @@ if __name__ == "__main__":
     
     plt.title('check')
     plt.grid()
+    plt.savefig('./picture/check.jpg')
     plt.show()
     
-    #
-
-    # model.predict(tmp.iloc[:,:-1])
-    # modela = joblib.load("./model/stable__Model.pkl")
-    # modela.predict(test)
-    # model.best_estimator_.predict(test)
     pass
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+# '''
