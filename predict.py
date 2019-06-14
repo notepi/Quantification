@@ -23,11 +23,18 @@ import matplotlib.ticker as ticker
 # from sklearn.externals import joblib
 import datetime
 import joblib
+import logging
 
 def getstockprice(stocklist):
     tt=[]
     tt.append(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
-    df=ts.get_realtime_quotes(stocklist) #Single stock symbol
+
+    #读取异常，抛出
+    try:
+        df=ts.get_realtime_quotes(stocklist) #stock list
+    except:
+        raise
+
     df=df[['name','price','time']]
     df['price']=df['price'].apply(float)
     temp=df['price'].tolist()
@@ -38,14 +45,25 @@ def getstockprice(stocklist):
     
     data.index=tt
     return data
- 
+def setlog():
+    pass
     
 if __name__ == "__main__":
+    ###########################################
+    #不打印到屏幕
+    logger = logging.getLogger(__name__)
+    logger.setLevel(level = logging.INFO)
+    handler = logging.FileHandler("./log.txt")
+    handler.setLevel(logging.INFO)
+    formatter = logging.Formatter('%(lineno)d %(asctime)s %(name)s %(levelname)s--%(message)s')
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+    #################################################
     regtime=6
     mergenums=10
     stophour=16
     ts.set_token('4e980c06a141622965e416b016f45027fb5f0fa47f0d6d8863d4bd31')
-    
+    ####################################    
     pro = ts.pro_api()
     '''
     数据频度 ：支持分钟(min)/日(D)/周(W)/月(M)K线，
@@ -79,8 +97,14 @@ if __name__ == "__main__":
             time.sleep(1)
             continue
             pass
+        try:
+            result_tmp.append(getstockprice(stock_code))
+        except Exception as result:
+            logger.error(result)
+            time.sleep(1)
+            continue
 
-        result_tmp.append(getstockprice(stock_code))
+
         i=i+1
         time.sleep(1)
         if i >= mergenums:

@@ -146,10 +146,6 @@ def f(train,test,na):
     
     
     return result,lasso_model
-
-
- 
-    
 if __name__ == "__main__":
 
     ts.set_token('4e980c06a141622965e416b016f45027fb5f0fa47f0d6d8863d4bd31')
