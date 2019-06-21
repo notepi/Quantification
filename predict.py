@@ -26,22 +26,35 @@ import joblib
 import logging
 
 def getstockprice(stocklist):
+    stocklist=stock_code
     tt=[]
     tt.append(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
-
+    flag=0
     #读取异常，抛出
     try:
         df=ts.get_realtime_quotes(stocklist) #stock list
     except:
-        raise
-
+        flag=1
+        code=stocklist[:-2]
+        code.append(stocklist[-1])
+        df=ts.get_realtime_quotes(code) #stock list
+        logger.error('sh error!!!!')
+        pass
     df=df[['name','price','time']]
     df['price']=df['price'].apply(float)
     temp=df['price'].tolist()
+    name=list(df['name'])
+    if flag:
+        temp.append(temp[-1])
+        temp[-2]=3000
+        name.append(name[-1])
+        name[-2]='上证指数'
+        pass
+    
     # 对上证指数进行缩放
     temp[-2]=temp[-2]/200
     data=pd.DataFrame(data=temp).T
-    data.columns=df['name']
+    data.columns=name
     
     data.index=tt
     return data
@@ -84,6 +97,12 @@ if __name__ == "__main__":
         final=getstockprice(stock_code)
         pass
     linerecordtime=time.time()
+    # df=pro.index_weight(index_code='000001.sh')
+    # data=df['trade_date'].value_counts().index.tolist()[0]
+    # data=df[df['trade_date']==data]
+    # code=data['con_code'].apply(lambda x:x.split(".")[0]).to_list()
+    # hh=getstockprice(code[:20])
+
     while(1):
         # 读取当前时间
         localtime=time.strftime("%Y-%m-%d %H-%M-%S", time.localtime())
@@ -91,15 +110,17 @@ if __name__ == "__main__":
         hour=int(localtime[11:13])
         mines=int(localtime[14:16])
         mytime=hour*100+mines
-        if mytime<930 or mytime>1500 or (mytime>1130 and mytime<1300):
-            time.sleep(1)
-            # print("sleeping")
-            time.sleep(1)
-            continue
-            pass
+        # if mytime<930 or mytime>1500 or (mytime>1130 and mytime<1300):
+        #     time.sleep(1)
+        #     # print("sleeping")
+        #     time.sleep(1)
+        #     continue
+        #     pass
+
         try:
             result_tmp.append(getstockprice(stock_code))
         except Exception as result:
+            print("error")
             logger.error(result)
             time.sleep(1)
             continue
@@ -107,6 +128,7 @@ if __name__ == "__main__":
 
         i=i+1
         time.sleep(1)
+
         if i >= mergenums:
             #间隔dealynums秒进行一次合并
             #重新归零
@@ -142,25 +164,6 @@ if __name__ == "__main__":
             # 不到时间不操作
             if len(final) >0 :
                 yhat=model.predict(final.iloc[:,:-1])
-
-                # tick_spacing=int(len(final)/30)+1
-                # y=final.iloc[:,-1].values
-                # ret=yhat-y
-                # _, ax = plt.subplots(1,1)
-                # ax.plot(final.iloc[:,-1].index,yhat,label='y_hat',color='r')
-                # ax.plot(final.iloc[:,-1].index,y,label='HY',color='b')
-                # ax.xaxis.set_major_locator(ticker.MultipleLocator(tick_spacing))
-                # plt.xticks(rotation=45,size = 5)
-                # plt.legend()
-                
-                # ax2 = ax.twinx()
-                # _, =ax2.plot(ret, color='g',label='y_ret') # green
-                # ax2.set_ylabel('ret', color='g')   
-                # ax2.xaxis.set_major_locator(ticker.MultipleLocator(tick_spacing))
-                
-                # plt.title(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
-                # plt.grid()
-                # plt.show()
                 final.to_csv("./temp/final.csv")
                 mytemp=final.copy()
                 mytemp['yhat']=yhat
@@ -177,27 +180,5 @@ if __name__ == "__main__":
         print("时间:%s|误差:%f|预测值:%f|实际值:%f"%\
              (time.strftime("%Y-%m-%d %H-%M-%S", time.localtime()),(yhat-y)[0],yhat[0],y[0]),flush=True)
 
-
-
-        # print(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
-        # print("误差:",(yhat-y)[0])
-        # print('预测值:',yhat[0])
-        # print('实际值:',y[0])
-
         pass #while结束
-
-
-        #进行预测 
-
-
-
-
-
-
-
-
-
-
-
-
 
