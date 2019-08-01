@@ -16,6 +16,7 @@ import matplotlib.ticker as ticker
 import numpy as np
 import pandas as pd
 import tushare as ts
+import datetime
 from sklearn.linear_model import Lasso, Ridge
 from sklearn.metrics import mean_absolute_error  # 平方绝对误差
 from sklearn.metrics import mean_squared_error  # 均方误差
@@ -173,7 +174,12 @@ if __name__ == "__main__":
     startime_read=list(stockdata['startime'])[0]
     #截止日期要比真实的大1
     temp=time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
-    temp=str(int("".join(temp.split(" ")[0].split('-')))+1)
+    #------
+    # temp=str(int("".join(temp.split(" ")[0].split('-')))+1)
+    temp=str(int("".join(temp.split(" ")[0].split('-'))))
+    date = datetime.datetime.strptime(temp,'%Y%m%d')
+    #日期+1
+    temp=str((date+datetime.timedelta(days=1)).strftime("%Y%m%d"))
     endtime_read=temp
     print("start time is:",startime_read)
     print("end time is:",endtime_read)
@@ -218,7 +224,11 @@ if __name__ == "__main__":
             # 对数据进行融合
             data=pd.concat([data,temp])  
             #更新下一轮读取起始时间，既上一轮的结尾日期+1
-            nexttime=int("".join(df["trade_time"].loc[1].split()[0].split("-")))+1
+            # nexttime=int("".join(df["trade_time"].loc[1].split()[0].split("-")))+1
+            nexttime="".join(df["trade_time"].loc[1].split()[0].split("-"))
+            date = datetime.datetime.strptime(nexttime,'%Y%m%d')
+            #日期+1
+            nexttime=str((date+datetime.timedelta(days=1)).strftime("%Y%m%d"))
             startime=str(nexttime)
             print(len(df))
             print(nexttime)
@@ -286,13 +296,13 @@ if __name__ == "__main__":
     ret=yhat-y
     y_or=model_or.predict(finaldata.iloc[-241:,:-1])
     
-    tick_spacing = int(len(result)/60)+1
+    tick_spacing = int(len(yhat)/60)+1
     _, ax = plt.subplots(1,1)
     ax.plot(finaldata.iloc[-241:,-1].index,yhat,label='y_hat',color='r')
     ax.plot(finaldata.iloc[-241:,-1].index,y,label='Yreal',color='b')
     ax.plot(finaldata.iloc[-241:,-1].index,y_or,label='y_or',color='y')
     ax.xaxis.set_major_locator(ticker.MultipleLocator(tick_spacing)) 
-    plt.xticks(rotation=270,size = 8)
+    plt.xticks(rotation=45,size = 8)
     plt.legend()
 
     
@@ -305,6 +315,33 @@ if __name__ == "__main__":
     plt.grid()
     plt.savefig('./picture/check.jpg')
     plt.show()
+
+
+    #预测所有的过去
+    yhat=model.predict(finaldata.iloc[:,:-1])
+    y=finaldata.iloc[:,-1].values
+    ret=yhat-y
+
+    tick_spacing = int(len(yhat)/60)+1
+    _, ax = plt.subplots(1,1)
+    ax.plot(finaldata.iloc[:,-1].index,yhat,label='y_hat',color='r')
+    ax.plot(finaldata.iloc[:,-1].index,y,label='Yreal',color='b')
+    plt.xticks(rotation=45,size = 8)
+    plt.legend()
+
+    ax2 = ax.twinx()
+    _, =ax2.plot(ret, color='g',label='y_ret') # green
+    ax2.set_ylabel('ret', color='g')   
+    ax2.xaxis.set_major_locator(ticker.MultipleLocator(tick_spacing))
+
+
+    plt.title('history')
+    plt.grid()
+    plt.savefig('./picture/history.jpg')
+    plt.show()
+
+
+
     
     pass
 # '''

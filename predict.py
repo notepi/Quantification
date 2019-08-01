@@ -26,7 +26,7 @@ import joblib
 import logging
 
 def getstockprice(stocklist):
-    stocklist=stock_code
+    # stocklist=stock_code
     tt=[]
     tt.append(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
     flag=0
