@@ -197,7 +197,12 @@ if __name__ == "__main__":
             data=pd.read_csv("./data/"+stock_name[name_index]+".csv")
             data=data.sort_values(by='time',ascending=False)
             print('读取文件成功，重置读取起始时间')
-            startime=str(int("".join(data["time"].values[0].split()[0].split("-"))) + 1)
+            # startime=str(int("".join(data["time"].values[0].split()[0].split("-"))) + 1)
+            temp=str(int("".join(data["time"].values[0].split()[0].split("-"))))
+            date = datetime.datetime.strptime(temp,'%Y%m%d')
+            temp=str((date+datetime.timedelta(days=1)).strftime("%Y%m%d"))
+            startime=str(temp)
+
         except:
             print('无文件，从头开始读取')
             #设置空表

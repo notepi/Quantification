@@ -11852,3 +11852,8 @@
 124 2019-07-08 14:27:26,634 __main__ ERROR--<urlopen error [Errno 11001] getaddrinfo failed>
 124 2019-07-08 14:27:27,635 __main__ ERROR--<urlopen error [Errno 11001] getaddrinfo failed>
 124 2019-07-23 14:56:20,371 __main__ ERROR--<urlopen error timed out>
+41 2019-08-05 15:12:16,080 __main__ ERROR--sh error!!!!
+41 2019-08-05 16:55:05,237 __main__ ERROR--sh error!!!!
+41 2019-08-05 19:25:38,067 __main__ ERROR--sh error!!!!
+41 2019-08-05 21:42:04,397 __main__ ERROR--sh error!!!!
+41 2019-08-06 02:29:05,918 __main__ ERROR--sh error!!!!
