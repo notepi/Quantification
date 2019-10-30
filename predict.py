@@ -111,7 +111,7 @@ if __name__ == "__main__":
         mines=int(localtime[14:16])
         mytime=hour*100+mines
         if mytime<930 or mytime>1500 or (mytime>1130 and mytime<1300):
-            time.sleep(1)
+            time.sleep(1)  
             # print("sleeping")
             time.sleep(1)
             continue
