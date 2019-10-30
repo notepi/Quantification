@@ -296,6 +296,7 @@ if __name__ == "__main__":
     train,test  = train_test_split(finaldata, train_size=0.99, random_state=1)
     re,model=f(train,test,na='stable_')
     
+    '''
     #检验结果
     yhat=model.predict(finaldata.iloc[-241:,:-1])
     y=finaldata.iloc[-241:,-1].values
@@ -347,7 +348,7 @@ if __name__ == "__main__":
     plt.show()
 
 
-
+    '''
     
     pass
 # '''
